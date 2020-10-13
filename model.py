@@ -71,7 +71,6 @@ class Model(object):
         with tf.GradientTape() as tape:
             input_embeddings = self.input_embedding_layer(batch_input)
             predictions, attention_weights = self.transformer(input_embeddings, batch_target, True, None, self.look_ahead_mask, None)
-            pdb.set_trace()
             loss = self.loss_function(batch_target, predictions)
         variables = self.input_embedding_layer.trainable_variables + self.transformer.trainable_variables
         gradients = tape.gradient(loss, variables)
@@ -99,9 +98,9 @@ class Model(object):
 
             predicted_id = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
 
-            output = tf.concat([output, predicted_id], axis=-1)
-        batch_true_char = np.sum(np.equal(output[:, 1:], batch_target))
-        batch_true_str  = np.sum(np.prod(np.equal(output[:, 1:], batch_target), axis=1))
+            output = tf.concat([output[:, :-1], predicted_id, output[:, -1:]], axis=-1)
+        batch_true_char = np.sum(np.equal(output[:, :-1], batch_target))
+        batch_true_str  = np.sum(np.prod(np.equal(output[:, :-1], batch_target), axis=1))
         return batch_true_char, batch_true_str
 
 
@@ -140,7 +139,7 @@ class Model(object):
 
             predicted_id = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
 
-            output = tf.concat([output, predicted_id], axis=-1)
+            output = tf.concat([output[:, :-1], predicted_id, output[:, -1:]], axis=-1)
         return output
 
 
@@ -156,20 +155,20 @@ class Model(object):
                 if batch % 1 == 0:
                     print('Epoch {} Batch {} Loss {:.4f} Time {}'.format(epoch + 1, batch, batch_loss, datetime.now()-start))
 
-            # # evaluate on train set
+            # evaluate on train set
             # logging.info('evaluate on train set')
-            # cnt_true_char = 0
-            # cnt_true_str = 0
-            # sum_char = 0
-            # sum_str = 0
-            # for batch, (batch_input, batch_target) in tqdm(enumerate(self.train_dataset.dataset)):
-            #     batch_true_char, batch_true_str = self.evaluate(batch_input, batch_target)
-            #     cnt_true_char += batch_true_char
-            #     cnt_true_str  += batch_true_str
-            #     sum_char += batch_input.shape[0] * hparams.max_char_length
-            #     sum_str  += batch_input.shape[0]
-            # train_char_acc = cnt_true_char/sum_char
-            # train_str_acc  = cnt_true_str/sum_str
+            #cnt_true_char = 0
+            #cnt_true_str = 0
+            #sum_char = 0
+            #sum_str = 0
+            #for batch, (batch_input, batch_target) in tqdm(enumerate(self.train_dataset.dataset)):
+            #    batch_true_char, batch_true_str = self.evaluate(batch_input, batch_target)
+            #    cnt_true_char += batch_true_char
+            #    cnt_true_str  += batch_true_str
+            #    sum_char += batch_input.shape[0] * hparams.max_char_length
+            #    sum_str  += batch_input.shape[0]
+            #train_char_acc = cnt_true_char/sum_char
+            #train_str_acc  = cnt_true_str/sum_str
 
             # evaluate on valid set
             logging.info('evaluate on valid set')
@@ -185,8 +184,8 @@ class Model(object):
                 sum_str  += batch_input.shape[0]
             valid_char_acc = cnt_true_char/sum_char
             valid_str_acc  = cnt_true_str/sum_str
-
             # save checkpoint
+            
             if hparams.save_best:
                 if self.best_val_acc < valid_str_acc:
                     self.checkpoint.save(file_prefix = self.checkpoint_prefix)
@@ -196,8 +195,8 @@ class Model(object):
             # write log
             with self.train_summary_writer.as_default():
                 tf.summary.scalar('loss', total_loss, step=epoch)
-            #     tf.summary.scalar('character accuracy', train_char_acc, step=epoch)
-            #     tf.summary.scalar('sequence accuracy', train_str_acc, step=epoch)
+            #    tf.summary.scalar('character accuracy', train_char_acc, step=epoch)
+            #    tf.summary.scalar('sequence accuracy', train_str_acc, step=epoch)
 
             with self.valid_summary_writer.as_default():
                 tf.summary.scalar('character accuracy', valid_char_acc, step=epoch)
@@ -205,9 +204,9 @@ class Model(object):
 
             # log traing result of each epoch
             logging.info('Epoch {} Loss {:.4f}'.format(epoch + 1, total_loss / batch))
-            # logging.info('Accuracy on train set:')
-            # logging.info('character accuracy: {:.6f}'.format(train_char_acc))
-            # logging.info('sequence accuracy : {:.6f}'.format(train_str_acc))
+            #logging.info('Accuracy on train set:')
+            #logging.info('character accuracy: {:.6f}'.format(train_char_acc))
+            #logging.info('sequence accuracy : {:.6f}'.format(train_str_acc))
             logging.info('Accuracy on valid set:')
             logging.info('character accuracy: {:.6f}'.format(valid_char_acc))
             logging.info('sequence accuracy : {:.6f}'.format(valid_str_acc))

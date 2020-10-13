@@ -3,11 +3,11 @@ class Hparams:
     def __init__(self):
         ### data and save path
         # path to train record file
-        self.train_record_path = '/home/common_gpu2/local_storage/dunglt/cmnd/extract_0606_id_number_v2/extract_0606_id_number_v2.valid'
+        self.train_record_path = '/media/tuanluong/HDD_V/datasets/id_number/extract_0606_id_number_v2.train'
         # number of samples in train record file
-        self.num_train_sample = 82324
+        self.num_train_sample = 573146
         # path to valid record file
-        self.valid_record_path = '/home/common_gpu2/local_storage/dunglt/cmnd/extract_0606_id_number_v2/extract_0606_id_number_v2.valid'
+        self.valid_record_path = '/media/tuanluong/HDD_V/datasets/id_number/extract_0606_id_number_v2.valid'
         # number of samples in valid record file
         self.num_valid_sample = 3213
         # path to characters file
@@ -15,7 +15,7 @@ class Hparams:
         # path to save models
         self.save_path = 'training_checkpoints'
         # save only best model or not
-        self.save_best = True
+        self.save_best = False
         self.max_to_keep = 1000
 
         ### input params
@@ -48,7 +48,7 @@ class Hparams:
 
         ### training params
         self.batch_size = 32
-        self.max_epochs = 100
+        self.max_epochs = 1000
         self.learning_rate = 0.0001 # schedule
 
 hparams = Hparams()
