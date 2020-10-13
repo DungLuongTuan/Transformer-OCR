@@ -58,12 +58,16 @@ class Model(object):
                                               input_embedding=self.input_embedding_layer,
                                               transformer=self.transformer)
 
-    def load_model(self):
-        latest = tf.train.latest_checkpoint(self.checkpoint_dir)
-        if latest != None:
-            logging.info('load model from {}'.format(latest))
-            self.last_epoch = int(latest.split('-')[-1])
-            self.checkpoint.restore(latest)
+    def load_model(self, model_path=None):
+        if model_path == None:
+            latest = tf.train.latest_checkpoint(self.checkpoint_dir)
+            if latest != None:
+                logging.info('load model from {}'.format(latest))
+                self.last_epoch = int(latest.split('-')[-1])
+                self.checkpoint.restore(latest)
+        else:
+            logging.info('load model from {}'.format(model_path))
+            self.checkpoint.restore(model_path)
 
     def train_step(self, batch_input, batch_target):
         loss = 0
@@ -156,19 +160,19 @@ class Model(object):
                     print('Epoch {} Batch {} Loss {:.4f} Time {}'.format(epoch + 1, batch, batch_loss, datetime.now()-start))
 
             # evaluate on train set
-            # logging.info('evaluate on train set')
-            #cnt_true_char = 0
-            #cnt_true_str = 0
-            #sum_char = 0
-            #sum_str = 0
-            #for batch, (batch_input, batch_target) in tqdm(enumerate(self.train_dataset.dataset)):
-            #    batch_true_char, batch_true_str = self.evaluate(batch_input, batch_target)
-            #    cnt_true_char += batch_true_char
-            #    cnt_true_str  += batch_true_str
-            #    sum_char += batch_input.shape[0] * hparams.max_char_length
-            #    sum_str  += batch_input.shape[0]
-            #train_char_acc = cnt_true_char/sum_char
-            #train_str_acc  = cnt_true_str/sum_str
+            logging.info('evaluate on train set')
+            cnt_true_char = 0
+            cnt_true_str = 0
+            sum_char = 0
+            sum_str = 0
+            for batch, (batch_input, batch_target) in tqdm(enumerate(self.train_dataset.dataset)):
+               batch_true_char, batch_true_str = self.evaluate(batch_input, batch_target)
+               cnt_true_char += batch_true_char
+               cnt_true_str  += batch_true_str
+               sum_char += batch_input.shape[0] * hparams.max_char_length
+               sum_str  += batch_input.shape[0]
+            train_char_acc = cnt_true_char/sum_char
+            train_str_acc  = cnt_true_str/sum_str
 
             # evaluate on valid set
             logging.info('evaluate on valid set')
@@ -195,8 +199,8 @@ class Model(object):
             # write log
             with self.train_summary_writer.as_default():
                 tf.summary.scalar('loss', total_loss, step=epoch)
-            #    tf.summary.scalar('character accuracy', train_char_acc, step=epoch)
-            #    tf.summary.scalar('sequence accuracy', train_str_acc, step=epoch)
+               tf.summary.scalar('character accuracy', train_char_acc, step=epoch)
+               tf.summary.scalar('sequence accuracy', train_str_acc, step=epoch)
 
             with self.valid_summary_writer.as_default():
                 tf.summary.scalar('character accuracy', valid_char_acc, step=epoch)
@@ -204,10 +208,10 @@ class Model(object):
 
             # log traing result of each epoch
             logging.info('Epoch {} Loss {:.4f}'.format(epoch + 1, total_loss / batch))
-            #logging.info('Accuracy on train set:')
-            #logging.info('character accuracy: {:.6f}'.format(train_char_acc))
-            #logging.info('sequence accuracy : {:.6f}'.format(train_str_acc))
+            logging.info('Accuracy on train set:')
+            logging.info('character accuracy: {:.6f}'.format(train_char_acc))
+            logging.info('sequence accuracy : {:.6f}'.format(train_str_acc))
             logging.info('Accuracy on valid set:')
             logging.info('character accuracy: {:.6f}'.format(valid_char_acc))
             logging.info('sequence accuracy : {:.6f}'.format(valid_str_acc))
-            # logging.info('Time taken for 1 epoch {} sec\n'.format(datetime.now() - start))
+

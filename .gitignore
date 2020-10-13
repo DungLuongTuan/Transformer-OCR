@@ -1,3 +1,4 @@
 training_checkpoints
+inference_logs
 __pycache__
 */__pycache__
